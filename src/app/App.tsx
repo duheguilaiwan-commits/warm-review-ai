@@ -563,7 +563,7 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
   const [subject, setSubject] = useState("");
   const [subjectFocused, setSubjectFocused] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set(["上课专注", "互动积极", "作业按时交"]));
   const [customTags, setCustomTags] = useState<string[]>([]); // global custom tag library
   const [focusStar, setFocusStar] = useState(0);
   const [absorbStar, setAbsorbStar] = useState(0);
