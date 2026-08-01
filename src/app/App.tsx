@@ -436,9 +436,19 @@ function LastReviewBar({ review }: { review: LastReview | null }) {
 
   const handleCopy = () => {
     if (!review) return;
-    navigator.clipboard?.writeText(review.fullText).catch(() => {});
-    setCopied(true);
-    setTimeout(() => { setCopied(false); setShowModal(false); }, 1600);
+    if (!review.fullText || !review.fullText.trim()) {
+      setCopied(false);
+      return; // 空态：不复制空内容
+    }
+    try {
+      navigator.clipboard?.writeText(review.fullText);
+      setCopied(true);
+      setTimeout(() => { setCopied(false); setShowModal(false); }, 1600);
+    } catch (e) {
+      setCopied(false);
+      // 复制失败（如非安全上下文）→ 显错误态
+      window.alert("复制失败：当前环境不支持 Clipboard API，请手动选择文本复制");
+    }
   };
 
   return (
@@ -951,9 +961,18 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
   }, []);
 
   const handleCopy = () => {
-    navigator.clipboard?.writeText(`【微信长文】\n${wechatText}\n\n【语音脚本】\n${voiceText}`).catch(() => {});
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (!wechatText.trim() && !voiceText.trim()) {
+      setCopied(false);
+      return; // 空态：无内容不复制
+    }
+    try {
+      navigator.clipboard?.writeText(`【微信长文】\n${wechatText}\n\n【语音脚本】\n${voiceText}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (e) {
+      setCopied(false);
+      window.alert("复制失败：当前环境不支持 Clipboard API，请手动选择文本复制");
+    }
   };
 
   return (
