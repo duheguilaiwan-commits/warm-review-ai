@@ -957,13 +957,13 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
       i++;
       setter(full.slice(0, i));
       if (i >= full.length) { clearInterval(iv); onDone(); }
-    }, 16);
+    }, 8);
     return iv;
   }, []);
 
   useEffect(() => {
     const t1 = typeText(samples.wechat, setWechatText, () => setWechatDone(true));
-    const delay = samples.wechat.length * 16 + 400;
+    const delay = samples.wechat.length * 8 + 200;
     const t2 = setTimeout(() => typeText(samples.voice, setVoiceText, () => setVoiceDone(true)), delay);
     return () => { clearInterval(t1); clearTimeout(t2); };
   }, []);
