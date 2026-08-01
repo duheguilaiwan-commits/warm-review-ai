@@ -1166,8 +1166,20 @@ export default function App() {
   };
 
   const handleRedo = () => {
+    // 真·换个说法：基于当前 genCtx.review 生成同主题变体（非静默跳转）
     setScreen("checkin");
-    setTimeout(() => setScreen("result"), 80);
+    setTimeout(() => {
+      setScreen("result");
+      // 重拼装 fullText 为"另一种语气"版本（沿用原结构，微调表达）
+      setGenCtx((prev) => {
+        if (!prev || !prev.review) return prev;
+        const base = prev.review.fullText;
+        const variant = base
+          .replace(/表现让老师很欣慰|表现非常稳定|让老师眼前一亮/, "表现再次让老师点头")
+          .replace(/这是一个很好的成长信号|在班里属于非常突出的水平|这是一个很好的成长信号/, "细节可以更讲究");
+        return { ...prev, review: { ...prev.review, fullText: variant } };
+      });
+    }, 80);
   };
 
   return (
