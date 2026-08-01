@@ -367,6 +367,13 @@ function ListScreen({
         )}
       </div>
 
+      {/* profile modal (list-row 真档案弹层) */}
+      {profileStudent && (
+        <Modal onClose={() => setProfileStudent(null)}>
+          <ProfileCard student={profileStudent} idx={students.indexOf(profileStudent)} />
+        </Modal>
+      )}
+
       {/* FAB */}
       <button
         onClick={() => setShowAdd(true)}
@@ -910,6 +917,7 @@ interface GenerateContext {
   focusStar: number;
   absorbStar: number;
   note: string;
+  review?: { fullText: string; summary: string };
 }
 
 function buildSampleText(ctx: GenerateContext, student: Student): { wechat: string; voice: string } {
