@@ -1201,6 +1201,15 @@ export default function App() {
           onAccount={() => setScreen("account")}
         />
       )}
+      {/* 空态演示入口（第六步：列表空态可手动触发） */}
+      {screen === "list" && (
+        <button
+          onClick={() => setStudents([])}
+          style={{ position: "absolute", bottom: 92, left: 20, height: 36, padding: "0 14px", borderRadius: 999, border: "1.5px solid #F3F4F6", background: "white", color: "#6B7280", fontSize: 13, cursor: "pointer", zIndex: 20 }}
+        >
+          演示空态
+        </button>
+      )}
       {screen === "checkin" && activeStudent && (
         <CheckinScreen
           student={activeStudent}
