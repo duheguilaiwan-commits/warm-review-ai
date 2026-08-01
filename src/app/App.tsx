@@ -692,28 +692,62 @@ function CheckinScreen({ student, studentIdx, onGenerate, onEditStudent, onBack 
         </div>
 
         {/* ③ Category tabs */}
-        <div style={{ display: "flex", overflowX: "auto", padding: "14px 20px 12px", gap: 8, scrollbarWidth: "none", background: "transparent" }}>
-          {CATEGORIES.map((cat, i) => {
-            const active = activeTab === i;
-            return (
-              <button
-                key={i}
-                onClick={() => setActiveTab(i)}
-                style={{
-                  flexShrink: 0, height: 34, padding: "0 16px", borderRadius: 999,
-                  border: active ? "none" : "1.5px solid #F3F4F6",
-                  background: active ? cat.color : "white",
-                  color: active ? "white" : "#6B7280",
-                  fontSize: 13, fontWeight: active ? 600 : 400, cursor: "pointer", transition: "all 0.2s",
-                }}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
+        {/* 总标签（一级分类）— 尺寸放大 + 专属图标 + 分组卡片，与小标签显著拉开层级 */}
+        <div style={{ margin: "16px 20px 0", background: "white", borderRadius: 22, padding: "18px 16px 16px", boxShadow: "0 6px 24px rgba(0,0,0,0.05)", border: "1px solid #F3F4F6" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px 14px" }}>
+            <span style={{ width: 28, height: 28, borderRadius: 8, background: "#F97316", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 4.5L7.5 1.5L13.5 4.5V10.5L7.5 13.5L1.5 10.5V4.5Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/><path d="M7.5 1.5V13.5" stroke="white" strokeWidth="1.4"/><path d="M1.5 4.5L7.5 7.5L13.5 4.5" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/></svg>
+            </span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#1F2937", letterSpacing: "0.2px" }}>课堂表现分类</span>
+            <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500, marginLeft: 2 }}>左右滑动选择</span>
+          </div>
+          <div style={{ height: 1, background: "#F3F4F6", margin: "0 4px 14px" }} />
+          <div style={{ display: "flex", overflowX: "auto", gap: 12, scrollbarWidth: "none" }}>
+            {CATEGORIES.map((cat, i) => {
+              const active = activeTab === i;
+              // 5个分类的专属小图标
+              const icons = [
+                // 通用习惯：日历对勾
+                <svg key="i0" width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="11" rx="2.5" stroke={active ? "white" : cat.color} strokeWidth="1.4"/><path d="M5 1.5V4.5M11 1.5V4.5M2 6.5H14" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinecap="round"/><path d="M4.8 10.2L6.8 12.2L11.2 7.8" stroke={active ? "white" : cat.color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+                // 理科表现：三角尺
+                <svg key="i1" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 13L13 2V13H2Z" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinejoin="round"/><path d="M5 13V9.2M8.8 13V6.2M11 10.8H7.2" stroke={active ? "white" : cat.color} strokeWidth="1.1" strokeLinecap="round"/></svg>,
+                // 文科表现：书本
+                <svg key="i2" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 3.5C2 2.7 2.7 2 3.5 2H12.5C13.3 2 14 2.7 14 3.5V12C14 12.8 13.3 13.5 12.5 13.5H3.5C2.7 13.5 2 12.8 2 12V3.5Z" stroke={active ? "white" : cat.color} strokeWidth="1.4"/><path d="M2 5H14M8 2V13.5" stroke={active ? "white" : cat.color} strokeWidth="1.4"/></svg>,
+                // 素质艺术：画笔调色板
+                <svg key="i3" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5C12.8 1.8 11.7 1.8 11 2.5L8.5 5L11 7.5L13.5 5C14.2 4.3 14.2 3.2 13.5 2.5Z" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinejoin="round"/><path d="M7 6.5L2 11.5L4.5 14L9.5 9" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><circle cx="3.5" cy="12.5" r="0.8" fill={active ? "white" : cat.color}/></svg>,
+                // 成人教育：毕业帽
+                <svg key="i4" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L1.5 5L8 8L14.5 5L8 2Z" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinejoin="round"/><path d="M3.5 6.5V10C3.5 10.8 5.5 12 8 12C10.5 12 12.5 10.8 12.5 10V6.5" stroke={active ? "white" : cat.color} strokeWidth="1.4" strokeLinecap="round"/></svg>,
+              ];
+              return (
+                <button
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  style={{
+                    flexShrink: 0, height: 52, padding: "0 22px 0 14px", borderRadius: 16,
+                    border: active ? `2px solid ${cat.color}` : "2px solid transparent",
+                    background: active ? cat.color : "#F9FAFB",
+                    color: active ? "white" : "#4B5563",
+                    fontSize: 16, fontWeight: active ? 700 : 600, cursor: "pointer", transition: "all 0.22s ease",
+                    boxShadow: active ? `0 6px 20px ${cat.color}55, inset 0 1px 0 rgba(255,255,255,0.3)` : "inset 0 1px 0 rgba(255,255,255,0.6)",
+                    display: "flex", alignItems: "center", gap: 9,
+                  }}
+                >
+                  {icons[i]}
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* ④ Tag pills */}
+        {/* ④ Tag pills（细分小标签）— 保留原尺寸，但加当前分类小标题 */}
+        <div style={{ padding: "18px 20px 4px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <span style={{ width: 4, height: 16, borderRadius: 2, background: activeCat.color }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: activeCat.textColor }}>{activeCat.label} 细分表现</span>
+            <span style={{ fontSize: 11, color: "#9CA3AF" }}>点击多选</span>
+          </div>
+        </div>
         <div style={{ padding: "0 20px 16px", display: "flex", flexWrap: "wrap", gap: 8 }}>
           {allTagsForTab(activeTab).map(tag => {
             const sel = isSelected(tag);
