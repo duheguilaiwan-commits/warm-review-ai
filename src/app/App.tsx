@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ArrowLeft, Plus, ChevronRight, Copy, RefreshCw, X, MessageCircle, Mic, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Plus, ChevronRight, Copy, RefreshCw, X, MessageCircle, Mic, ChevronLeft, Download } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -168,28 +168,61 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
 
 // ─── Profile Card (no subject field) ─────────────────────────────────────────
 
-function ProfileCard({ student, idx }: { student: Student; idx: number }) {
+function ProfileCard({ student, idx, onSave, onClose }: { student: Student; idx: number; onSave?: (s: Student) => void; onClose?: () => void }) {
   const { bg, text } = avatarStyle(idx);
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(student.name);
+  const [personality, setPersonality] = useState(student.personality);
+  const [learningTrait, setLearningTrait] = useState(student.learningTrait);
+
+  const handleSave = () => {
+    if (!name.trim()) return;
+    onSave?.({
+      ...student,
+      name: name.trim(),
+      personality: personality.trim() || "暂未填写",
+      learningTrait: learningTrait.trim() || "暂未填写",
+    });
+    setEditing(false);
+  };
+
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
         <div style={{ width: 52, height: 52, borderRadius: 999, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: text, flexShrink: 0 }}>
           {student.name[0]}
         </div>
-        <div>
+        <div style={{ flex: 1 }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: "#1F2937" }}>{student.name}</div>
           <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>学生档案</div>
         </div>
+        {!editing && onSave && (
+          <button onClick={() => setEditing(true)} style={{ fontSize: 13, color: "#F97316", background: "#FFEFE5", border: "none", borderRadius: 999, padding: "6px 14px", cursor: "pointer", fontWeight: 600 }}>编辑</button>
+        )}
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <ProfileRow label="性格底色" value={student.personality} />
-        <ProfileRow label="学习特点" value={student.learningTrait} />
-      </div>
+      {!editing ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <ProfileRow label="性格底色" value={student.personality} />
+          <ProfileRow label="学习特点" value={student.learningTrait} />
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <FormField label="姓名" value={name} onChange={setName} placeholder="学生姓名" />
+          <FormField label="性格底色" value={personality} onChange={setPersonality} placeholder="如：活泼好动，爱提问" />
+          <FormField label="学习特点" value={learningTrait} onChange={setLearningTrait} placeholder="如：视觉型学习者，计算易粗心" />
+        </div>
+      )}
       <div style={{ marginTop: 18, padding: "12px 14px", background: "#FFF8F3", borderRadius: 12 }}>
         <p style={{ fontSize: 12, color: "#9CA3AF", lineHeight: 1.65, margin: 0 }}>
           💡 暖评 AI 会根据性格底色自动调整反馈语气，学科语境由打卡页「本节课学科」提供
         </p>
       </div>
+      {editing && (
+        <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+          <button onClick={() => { setEditing(false); setName(student.name); setPersonality(student.personality); setLearningTrait(student.learningTrait); }} style={{ flex: 1, height: 44, background: "#F9FAFB", border: "1.5px solid #F3F4F6", borderRadius: 12, fontSize: 14, color: "#6B7280", cursor: "pointer" }}>取消</button>
+          <button onClick={handleSave} style={{ flex: 1, height: 44, background: "#F97316", border: "none", borderRadius: 12, fontSize: 14, fontWeight: 600, color: "white", cursor: "pointer" }}>保存</button>
+        </div>
+      )}
     </div>
   );
 }
@@ -281,11 +314,13 @@ function ListScreen({
   students,
   onSelect,
   onAddStudent,
+  onEditStudent,
   onAccount,
 }: {
   students: Student[];
   onSelect: (s: Student) => void;
   onAddStudent: (s: Student) => void;
+  onEditStudent: (s: Student) => void;
   onAccount: () => void;
 }) {
   const [profileStudent, setProfileStudent] = useState<Student | null>(null);
@@ -370,7 +405,11 @@ function ListScreen({
       {/* profile modal (list-row 真档案弹层) */}
       {profileStudent && (
         <Modal onClose={() => setProfileStudent(null)}>
-          <ProfileCard student={profileStudent} idx={students.indexOf(profileStudent)} />
+          <ProfileCard
+            student={profileStudent}
+            idx={students.findIndex(s => s.id === profileStudent.id)}
+            onSave={(s) => { onEditStudent(s); setProfileStudent(s); }}
+          />
         </Modal>
       )}
 
@@ -381,13 +420,6 @@ function ListScreen({
       >
         <Plus size={24} color="white" strokeWidth={2.5} />
       </button>
-
-      {/* Profile modal */}
-      {profileStudent && (
-        <Modal onClose={() => setProfileStudent(null)}>
-          <ProfileCard student={profileStudent} idx={students.findIndex(s => s.id === profileStudent.id)} />
-        </Modal>
-      )}
 
       {/* Add student modal */}
       {showAdd && (
@@ -554,30 +586,43 @@ function LastReviewBar({ review }: { review: LastReview | null }) {
 
 // ─── Check-in Screen ──────────────────────────────────────────────────────────
 
-function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
+function CheckinScreen({ student, studentIdx, onGenerate, onEditStudent, onBack }: {
   student: Student;
   studentIdx: number;
   onGenerate: (ctx: GenerateContext) => void;
+  onEditStudent: (s: Student) => void;
   onBack: () => void;
 }) {
   const [subject, setSubject] = useState("");
   const [subjectFocused, setSubjectFocused] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set(["上课专注", "互动积极", "作业按时交"]));
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [customTags, setCustomTags] = useState<string[]>([]); // global custom tag library
   const [focusStar, setFocusStar] = useState(0);
   const [absorbStar, setAbsorbStar] = useState(0);
   const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customInput, setCustomInput] = useState("");
   const [customCat, setCustomCat] = useState(0);
-  const [genError, setGenError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeCat = CATEGORIES[activeTab];
-  const lastReview = LAST_REVIEWS[student.id] ?? null;
+  const [lastReview, setLastReview] = useState<LastReview | null>(LAST_REVIEWS[student.id] ?? null);
+  useEffect(() => {
+    // 优先读 localStorage 真实历史；没有则回退 mock
+    try {
+      const raw = localStorage.getItem(`nuanping_review_${student.id}`);
+      if (raw) {
+        const rec = JSON.parse(raw);
+        if (rec && rec.fullText) {
+          setLastReview({ date: rec.date || "上次点评", summary: rec.summary || rec.fullText.slice(0, 50), fullText: rec.fullText });
+          return;
+        }
+      }
+    } catch {}
+    setLastReview(LAST_REVIEWS[student.id] ?? null);
+  }, [student.id]);
 
   const allTagsForTab = (tabIdx: number) => {
     const base = CATEGORIES[tabIdx].tags;
@@ -619,29 +664,13 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
     if (!subject.trim() && selectedTags.size === 0 && focusStar === 0 && absorbStar === 0) {
       return; // 不跳 result：显式空态（参考条占位逻辑不动）
     }
-    setLoading(true);
     // collect selected tags with their category
     const tags = Array.from(selectedTags).map(k => {
       const catIdx = parseInt(k.slice(1, 2));
-      const tag = k.slice(4);
+      const tag = k.slice(3);
       return { tag, category: CATEGORIES[catIdx].label };
     });
-    // ── simulate async generation w/ possible failure (mock "API") ──
-    setTimeout(() => {
-      try {
-        // 10% 模拟接口失败 → 显 alert 错误，不跳 result
-        if (Math.random() < 0.1) {
-          setGenError("生成失败：模拟接口超时，请重试");
-          setLoading(false);
-          return;
-        }
-        setLoading(false);
-        onGenerate({ subject, tags, focusStar, absorbStar, note });
-      } catch (e) {
-        setGenError("生成失败：前端拼装异常，请重试");
-        setLoading(false);
-      }
-    }, 1600);
+    onGenerate({ subject, tags, focusStar, absorbStar, note });
   };
 
   const autoResize = () => {
@@ -669,15 +698,6 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
 
         {/* ① 上次点评参考条 — always shown; null = no-history placeholder */}
         <LastReviewBar review={lastReview} />
-
-        {/* generation error alert (option-1 三态之一) */}
-        {genError && (
-          <div style={{ margin: "0 20px 14px", background: "#FEF2F2", border: "1.5px solid #FCA5A5", borderRadius: 14, padding: "12px 14px" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#DC2626", marginBottom: 4 }}>生成失败</div>
-            <div style={{ fontSize: 13, color: "#991B1B", lineHeight: 1.6 }}>{genError}</div>
-            <button onClick={() => setGenError(null)} style={{ marginTop: 8, height: 36, padding: "0 14px", borderRadius: 999, border: "1.5px solid #FCA5A5", background: "white", color: "#DC2626", fontSize: 13, cursor: "pointer" }}>我知道了</button>
-          </div>
-        )}
 
         {/* ② 本节课学科 — above tabs */}
         <div style={{ padding: "14px 20px 0" }}>
@@ -780,46 +800,21 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px 20px 28px", background: "linear-gradient(to top, #FFF8F3 75%, transparent)" }}>
         <button
           onClick={handleGenerate}
-          disabled={loading}
-          style={{ width: "100%", height: 54, background: loading ? "#9CA3AF" : "#F97316", color: "white", borderRadius: 999, fontSize: 17, fontWeight: 600, border: "none", cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: loading ? "none" : "0 6px 24px rgba(249,115,22,0.35)", transition: "all 0.2s" }}
+          style={{ width: "100%", height: 54, background: "#F97316", color: "white", borderRadius: 999, fontSize: 17, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 6px 24px rgba(249,115,22,0.35)", transition: "all 0.2s" }}
         >
-          {loading ? (
-            <><Spinner />AI 正在生成…</>
-          ) : (
-            <>
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                <path d="M9 2L11.2 7.2H16.5L12.2 10.5L13.8 15.8L9 12.8L4.2 15.8L5.8 10.5L1.5 7.2H6.8L9 2Z" fill="white" opacity="0.9" />
-              </svg>
-              生成反馈
-            </>
-          )}
+          <>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 2L11.2 7.2H16.5L12.2 10.5L13.8 15.8L9 12.8L4.2 15.8L5.8 10.5L1.5 7.2H6.8L9 2Z" fill="white" opacity="0.9" />
+            </svg>
+            生成反馈
+          </>
         </button>
       </div>
-
-      {/* Skeleton overlay */}
-      {loading && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(255,248,243,0.88)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, zIndex: 20 }}>
-          <div style={{ width: 56, height: 56, background: "#FFEFE5", borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="26" height="26" viewBox="0 0 26 26" fill="#F97316">
-              <path d="M13 2L15.8 9H23L17.5 13.5L19.5 21L13 17L6.5 21L8.5 13.5L3 9H10.2L13 2Z" />
-            </svg>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "#1F2937", margin: 0 }}>AI 正在思考…</p>
-            <p style={{ fontSize: 13, color: "#9CA3AF", marginTop: 4, marginBottom: 0 }}>大约需要 30 秒</p>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, width: 250 }}>
-            {[100, 80, 92, 68].map((w, i) => (
-              <div key={i} style={{ height: 11, background: "#F3F4F6", borderRadius: 6, width: `${w}%`, animation: `pulse 1.4s ease-in-out ${i * 0.18}s infinite` }} />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Profile modal */}
       {showProfile && (
         <Modal onClose={() => setShowProfile(false)}>
-          <ProfileCard student={student} idx={studentIdx} />
+          <ProfileCard student={student} idx={studentIdx} onSave={onEditStudent} />
         </Modal>
       )}
 
@@ -909,6 +904,40 @@ function Spinner() {
   return <div style={{ width: 18, height: 18, border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "white", borderRadius: 999, animation: "spin 0.8s linear infinite" }} />;
 }
 
+function ThinkingPlaceholder() {
+  const messages = [
+    "正在理解孩子的课堂表现…",
+    "正在组织个性化评语…",
+    "正在调整语言风格，让家长读着更亲切…",
+    "正在检查用词是否具体、真实…",
+    "最后润色一下，马上就好…",
+  ];
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [dots, setDots] = useState("");
+  useEffect(() => {
+    const mi = setInterval(() => setMsgIdx(i => (i + 1) % messages.length), 2200);
+    const di = setInterval(() => setDots(d => d.length >= 3 ? "" : d + "·"), 450);
+    return () => { clearInterval(mi); clearInterval(di); };
+  }, []);
+  return (
+    <div style={{ textAlign: "center", padding: "60px 20px" }}>
+      <div style={{ width: 60, height: 60, background: "#FFEFE5", borderRadius: 999, margin: "0 auto 18px", display: "flex", alignItems: "center", justifyContent: "center", animation: "spin 1.6s linear infinite" }}>
+        <svg width="28" height="28" viewBox="0 0 26 26" fill="#F97316"><path d="M13 2L15.8 9H23L17.5 13.5L19.5 21L13 17L6.5 21L8.5 13.5L3 9H10.2L13 2Z" /></svg>
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 600, color: "#1F2937", minHeight: 24 }}>
+        AI 正在认真撰写{dots}
+      </div>
+      <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 6, lineHeight: 1.6, minHeight: 40, transition: "opacity 0.3s" }}>{messages[msgIdx]}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, width: 250, margin: "20px auto 0" }}>
+        {[100, 82, 90, 68].map((w, i) => (
+          <div key={i} style={{ height: 11, background: "#F3F4F6", borderRadius: 6, width: `${w}%`, animation: `pulse 1.4s ease-in-out ${i * 0.18}s infinite` }} />
+        ))}
+      </div>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}`}</style>
+    </div>
+  );
+}
+
 // ─── Generate Context ─────────────────────────────────────────────────────────
 
 interface GenerateContext {
@@ -959,10 +988,18 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
   onBack: () => void;
   onRedo: () => void;
 }) {
-  const [samples, setSamples] = useState(() => buildFallback(ctx, student));
+  const [samples, setSamples] = useState<{ wechat: string; voice: string } | null>(null);
   useEffect(() => {
     let alive = true;
-    buildSampleText(ctx, student).then(r => { if (alive) setSamples(r); });
+    buildSampleText(ctx, student).then(r => {
+      if (!alive) return;
+      setSamples(r);
+      // 持久化到 localStorage 作为该生「上次点评」
+      try {
+        const rec = { date: new Date().toLocaleDateString("zh-CN", { month: "long", day: "numeric" }), summary: r.wechat.slice(0, 50) + (r.wechat.length > 50 ? "…" : ""), fullText: r.wechat };
+        localStorage.setItem(`nuanping_review_${student.id}`, JSON.stringify(rec));
+      } catch {}
+    });
     return () => { alive = false; };
   }, [ctx, student]);
   const [wechatText, setWechatText] = useState("");
@@ -983,11 +1020,12 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
   }, [samples]);
 
   useEffect(() => {
+    if (!samples) return;
     const t1 = typeText(samples.wechat, setWechatText, () => setWechatDone(true));
     const delay = samples.wechat.length * 8 + 200;
     const t2 = setTimeout(() => typeText(samples.voice, setVoiceText, () => setVoiceDone(true)), delay);
     return () => { clearInterval(t1); clearTimeout(t2); };
-  }, []);
+  }, [samples]);
 
   const handleCopy = () => {
     if (!wechatText.trim() && !voiceText.trim()) {
@@ -1041,8 +1079,12 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
 
       {/* Cards */}
       <div style={{ flex: 1, overflowY: "auto", padding: "14px 20px 100px", display: "flex", flexDirection: "column", gap: 14 }}>
-        <ResultCard icon={<MessageCircle size={14} color="#F97316" />} label="微信长文" badge="80–120字" text={wechatText} isDone={wechatDone} accentColor="#F97316" />
-        <ResultCard icon={<Mic size={14} color="#6B7280" />} label="语音脚本" badge="口语化" text={voiceText} isDone={voiceDone} accentColor="#6B7280" muted />
+        {samples ? (<>
+          <ResultCard icon={<MessageCircle size={14} color="#F97316" />} label="微信长文" badge="80–120字" text={wechatText} isDone={wechatDone} accentColor="#F97316" />
+          <ResultCard icon={<Mic size={14} color="#6B7280" />} label="语音脚本" badge="口语化" text={voiceText} isDone={voiceDone} accentColor="#6B7280" muted />
+        </>) : (
+          <ThinkingPlaceholder />
+        )}
       </div>
 
       {/* Bottom actions — only copy + redo */}
@@ -1057,7 +1099,7 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
           onClick={handleDownload}
           style={{ width: 116, height: 52, background: downloaded ? "#22C55E" : "#1F2937", color: "white", borderRadius: 999, fontSize: 15, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background 0.3s", boxShadow: "0 4px 20px rgba(31,41,55,0.18)" }}
         >
-          <Copy size={15} />{downloaded ? "已下载！" : "下载 .txt"}
+          <Download size={15} />{downloaded ? "已下载！" : "下载 .txt"}
         </button>
         <button
           onClick={() => setShowRedoModal(true)}
@@ -1108,7 +1150,7 @@ function ResultCard({ icon, label, badge, text, isDone, accentColor, muted }: {
 
 // ─── Account Screen ───────────────────────────────────────────────────────────
 
-function AccountScreen({ studentCount, onBack, onLogout }: { studentCount: number; onBack: () => void; onLogout: () => void }) {
+function AccountScreen({ studentCount, totalGenerated, onBack, onLogout }: { studentCount: number; totalGenerated: number; onBack: () => void; onLogout: () => void }) {
   const menuGroups = [
     {
       items: [
@@ -1147,15 +1189,13 @@ function AccountScreen({ studentCount, onBack, onLogout }: { studentCount: numbe
           </div>
           <div>
             <div style={{ fontSize: 18, fontWeight: 700, color: "#1F2937" }}>体验用户</div>
-            <div style={{ fontSize: 13, color: "#9CA3AF", marginTop: 3 }}>教培老师 · 已生成 128 条点评</div>
           </div>
         </div>
 
         {/* Stats */}
         <div style={{ background: "white", borderRadius: 20, padding: "18px 16px", marginBottom: 16, boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 0 }}>
-            <StatCell label="累计生成" value="128" color="#F97316" />
-            <StatCell label="本月生成" value="34" color="#1F2937" border />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}>
+            <StatCell label="累计生成" value={String(totalGenerated)} color="#F97316" />
             <StatCell label="服务学生" value={String(studentCount)} color="#1F2937" border />
           </div>
         </div>
@@ -1206,6 +1246,12 @@ export default function App() {
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [activeStudentIdx, setActiveStudentIdx] = useState(0);
   const [genCtx, setGenCtx] = useState<GenerateContext | null>(null);
+  const [totalGenerated, setTotalGenerated] = useState<number>(() => {
+    try {
+      const n = parseInt(localStorage.getItem("nuanping_total") || "0", 10);
+      return Number.isFinite(n) ? n : 0;
+    } catch { return 0; }
+  });
 
   const handleSelect = (s: Student) => {
     setActiveStudent(s);
@@ -1217,9 +1263,20 @@ export default function App() {
     setStudents(prev => [s, ...prev]);
   };
 
+  const handleEditStudent = (s: Student) => {
+    setStudents(prev => prev.map(x => x.id === s.id ? s : x));
+    setActiveStudent(prev => prev && prev.id === s.id ? s : prev);
+  };
+
   const handleGenerate = (ctx: GenerateContext) => {
     setGenCtx(ctx);
     setScreen("result");
+    // 累计生成 +1，持久化到 localStorage
+    setTotalGenerated(prev => {
+      const next = prev + 1;
+      try { localStorage.setItem("nuanping_total", String(next)); } catch {}
+      return next;
+    });
   };
 
   const handleRedo = () => {
@@ -1247,6 +1304,7 @@ export default function App() {
           students={students}
           onSelect={handleSelect}
           onAddStudent={handleAddStudent}
+          onEditStudent={handleEditStudent}
           onAccount={() => setScreen("account")}
         />
       )}
@@ -1264,6 +1322,7 @@ export default function App() {
           student={activeStudent}
           studentIdx={activeStudentIdx}
           onGenerate={handleGenerate}
+          onEditStudent={handleEditStudent}
           onBack={() => setScreen("list")}
         />
       )}
@@ -1278,6 +1337,7 @@ export default function App() {
       {screen === "account" && (
         <AccountScreen
           studentCount={students.length}
+          totalGenerated={totalGenerated}
           onBack={() => setScreen("list")}
           onLogout={() => setScreen("login")}
         />
