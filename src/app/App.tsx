@@ -556,6 +556,7 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [customInput, setCustomInput] = useState("");
   const [customCat, setCustomCat] = useState(0);
+  const [genError, setGenError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const activeCat = CATEGORIES[activeTab];
@@ -597,6 +598,10 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
   };
 
   const handleGenerate = () => {
+    // ── empty-state guard (no tags / no stars / empty subject) ──
+    if (!subject.trim() && selectedTags.size === 0 && focusStar === 0 && absorbStar === 0) {
+      return; // 不跳 result：显式空态（参考条占位逻辑不动）
+    }
     setLoading(true);
     // collect selected tags with their category
     const tags = Array.from(selectedTags).map(k => {
@@ -604,9 +609,21 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
       const tag = k.slice(4);
       return { tag, category: CATEGORIES[catIdx].label };
     });
+    // ── simulate async generation w/ possible failure (mock "API") ──
     setTimeout(() => {
-      setLoading(false);
-      onGenerate({ subject, tags, focusStar, absorbStar, note });
+      try {
+        // 10% 模拟接口失败 → 显 alert 错误，不跳 result
+        if (Math.random() < 0.1) {
+          setGenError("生成失败：模拟接口超时，请重试");
+          setLoading(false);
+          return;
+        }
+        setLoading(false);
+        onGenerate({ subject, tags, focusStar, absorbStar, note });
+      } catch (e) {
+        setGenError("生成失败：前端拼装异常，请重试");
+        setLoading(false);
+      }
     }, 1600);
   };
 
@@ -635,6 +652,15 @@ function CheckinScreen({ student, studentIdx, onGenerate, onBack }: {
 
         {/* ① 上次点评参考条 — always shown; null = no-history placeholder */}
         <LastReviewBar review={lastReview} />
+
+        {/* generation error alert (option-1 三态之一) */}
+        {genError && (
+          <div style={{ margin: "0 20px 14px", background: "#FEF2F2", border: "1.5px solid #FCA5A5", borderRadius: 14, padding: "12px 14px" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#DC2626", marginBottom: 4 }}>生成失败</div>
+            <div style={{ fontSize: 13, color: "#991B1B", lineHeight: 1.6 }}>{genError}</div>
+            <button onClick={() => setGenError(null)} style={{ marginTop: 8, height: 36, padding: "0 14px", borderRadius: 999, border: "1.5px solid #FCA5A5", background: "white", color: "#DC2626", fontSize: 13, cursor: "pointer" }}>我知道了</button>
+          </div>
+        )}
 
         {/* ② 本节课学科 — above tabs */}
         <div style={{ padding: "14px 20px 0" }}>
