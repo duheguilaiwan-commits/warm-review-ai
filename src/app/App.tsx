@@ -920,7 +920,7 @@ interface GenerateContext {
   review?: { fullText: string; summary: string };
 }
 
-function buildSampleText(ctx: GenerateContext, student: Student): { wechat: string; voice: string } {
+function buildFallback(ctx: GenerateContext, student: Student): { wechat: string; voice: string } {
   const subjectLine = ctx.subject ? `${ctx.subject}课` : "这节课";
   const focusDesc = ctx.focusStar >= 4 ? "专注度很高" : ctx.focusStar >= 2 ? "整体比较认真" : "需要加强专注";
   const absorbDesc = ctx.absorbStar >= 4 ? "课堂内容掌握得不错" : ctx.absorbStar >= 2 ? "对知识点有一定吸收" : "知识点还需多巩固";
@@ -929,10 +929,26 @@ function buildSampleText(ctx: GenerateContext, student: Student): { wechat: stri
   const personalityHint = student.personality ? `结合孩子${student.personality.split("，")[0]}的特点，` : "";
 
   const wechat = `您好！今天${subjectLine}，${student.name}${focusDesc}，${absorbDesc} 😊${tagTexts ? `\n\n课堂表现中，${tagTexts}，让老师印象很深刻。` : ""}${factLine ? `\n\n${factLine}` : ""}\n\n${personalityHint}接下来我们可以一起在这方面多鼓励和练习，相信进步会越来越明显！期待下节课继续加油 ✨`;
-
   const voice = `您好，我是${student.name}的老师。今天${subjectLine}想跟您同步一下。${focusDesc}，${absorbDesc}。${tagTexts ? `课上${tagTexts}这几点表现很值得肯定。` : ""}${ctx.note.trim() ? ctx.note.trim() + "，我们下次重点关注一下。" : ""}有什么问题随时联系我！`;
 
   return { wechat, voice };
+}
+
+async function buildSampleText(ctx: GenerateContext, student: Student): Promise<{ wechat: string; voice: string }> {
+  // 真模型优先：经 Vite 中间件 /api/generate 调 DeepSeek；失败/超时回退本地模板
+  try {
+    const r = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ctx, student }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    if (data?.wechat && data?.voice) return data;
+    throw new Error("empty payload");
+  } catch (e) {
+    return buildFallback(ctx, student);
+  }
 }
 
 // ─── Result Screen ────────────────────────────────────────────────────────────
@@ -943,7 +959,12 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
   onBack: () => void;
   onRedo: () => void;
 }) {
-  const samples = buildSampleText(ctx, student);
+  const [samples, setSamples] = useState(() => buildFallback(ctx, student));
+  useEffect(() => {
+    let alive = true;
+    buildSampleText(ctx, student).then(r => { if (alive) setSamples(r); });
+    return () => { alive = false; };
+  }, [ctx, student]);
   const [wechatText, setWechatText] = useState("");
   const [voiceText, setVoiceText] = useState("");
   const [wechatDone, setWechatDone] = useState(false);
@@ -959,7 +980,7 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
       if (i >= full.length) { clearInterval(iv); onDone(); }
     }, 8);
     return iv;
-  }, []);
+  }, [samples]);
 
   useEffect(() => {
     const t1 = typeText(samples.wechat, setWechatText, () => setWechatDone(true));
