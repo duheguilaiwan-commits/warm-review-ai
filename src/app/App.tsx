@@ -983,6 +983,28 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
     }
   };
 
+  const [downloaded, setDownloaded] = useState(false);
+  const handleDownload = () => {
+    if (!wechatText.trim() && !voiceText.trim()) {
+      setDownloaded(false);
+      return; // 空态：无内容不下载
+    }
+    const blob = new Blob(
+      [`【微信长文】\n${wechatText}\n\n【语音脚本】\n${voiceText}`],
+      { type: "text/plain;charset=utf-8" }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `暖评_${student.name}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2000);
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#FFF8F3" }}>
       {/* Top nav */}
@@ -1009,6 +1031,12 @@ function ResultScreen({ student, ctx, onBack, onRedo }: {
           style={{ flex: 1, height: 52, background: copied ? "#22C55E" : "#1F2937", color: "white", borderRadius: 999, fontSize: 16, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 7, transition: "background 0.3s", boxShadow: "0 4px 20px rgba(31,41,55,0.18)" }}
         >
           <Copy size={15} />{copied ? "已复制！" : "一键复制"}
+        </button>
+        <button
+          onClick={handleDownload}
+          style={{ width: 116, height: 52, background: downloaded ? "#22C55E" : "#1F2937", color: "white", borderRadius: 999, fontSize: 15, fontWeight: 600, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background 0.3s", boxShadow: "0 4px 20px rgba(31,41,55,0.18)" }}
+        >
+          <Copy size={15} />{downloaded ? "已下载！" : "下载 .txt"}
         </button>
         <button
           onClick={() => setShowRedoModal(true)}
