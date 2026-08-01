@@ -35,10 +35,10 @@ function deepseekProxy() {
           try {
             const { ctx, student } = JSON.parse(body)
             const prompt = `你是中小学老师的好帮手。根据以下信息生成一段微信长文和一段口语化语音脚本（各 80-120 字），语气亲切、带 emoji：\n学科：${ctx.subject}\n专注度：${ctx.focusStar}/5\n吸收度：${ctx.absorbStar}/5\n表现标签：${ctx.tags.map((t: any) => t.tag).join('、')}\n老师备注：${ctx.note}\n学生：${student.name}（${student.personality || '无特殊备注'}）`
-            const r = await fetch('https://api.deepseek.com/v1/chat/completions', {
+            const r = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-              body: JSON.stringify({ model: 'deepseek-chat', messages: [{ role: 'user', content: prompt }], stream: false }),
+              body: JSON.stringify({ model: 'deepseek-ai/DeepSeek-V3', messages: [{ role: 'user', content: prompt }], stream: false }),
             })
             const data = await r.json()
             const text = data?.choices?.[0]?.message?.content || ''
