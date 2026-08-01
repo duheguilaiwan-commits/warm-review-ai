@@ -1,14 +1,21 @@
 
   <!DOCTYPE html>
-  <html lang="en">
+  <html lang="zh-CN">
     <head>
       
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>暖评 AI 移动端 UI 原型</title>
-      <meta name="description" content="An AI-powered feedback tool for educators that generates personalized, emotionally intelligent messages and voice scripts for student evaluations, streamlining communication with parents." />
-      <meta name="robots" content="noindex, nofollow" />
-      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+      <title>暖评 AI · 老师版</title>
+      <meta name="description" content="为老师设计的 AI 课后点评工具，30 秒生成个性化微信长文与语音脚本。" />
+      <meta name="robots" content="index, follow" />
+      <style>
+        html, body { height: 100%; margin: 0; }
+        #root { min-height: 100%; }
+        /* 修复手机端 placeholder 颜色过浅 */
+        input::placeholder, textarea::placeholder { color: #9CA3AF; opacity: 1; }
+        input::-webkit-input-placeholder, textarea::-webkit-input-placeholder { color: #9CA3AF; }
+        input::-ms-input-placeholder, textarea::-ms-input-placeholder { color: #9CA3AF; }
+      </style>
       
     </head>
 

@@ -99,50 +99,28 @@ function avatarStyle(idx: number) {
   return { bg: AVATAR_COLORS[idx % AVATAR_COLORS.length], text: AVATAR_TEXT_COLORS[idx % AVATAR_TEXT_COLORS.length] };
 }
 
-// ─── Phone Frame ──────────────────────────────────────────────────────────────
+// ─── Page Container ───────────────────────────────────────────────────────────
 
 function PhoneFrame({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ background: "linear-gradient(135deg, #fdf2e9 0%, #fce4d6 50%, #fdf6f0 100%)" }}
+      className="min-h-screen"
+      style={{
+        background: "#FFF8F3",
+        fontFamily: "'Noto Sans SC','PingFang SC',-apple-system,'Helvetica Neue',sans-serif",
+      }}
     >
       <div
         style={{
-          width: 375,
-          height: 812,
-          borderRadius: 44,
-          boxShadow: "0 40px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 0 2px rgba(255,255,255,0.6)",
+          width: "100%",
+          maxWidth: 880,
+          margin: "0 auto",
+          minHeight: "100vh",
           background: "#FFF8F3",
-          fontFamily: "'Noto Sans SC','PingFang SC',-apple-system,'Helvetica Neue',sans-serif",
           position: "relative",
-          overflow: "hidden",
         }}
       >
-        {/* Status bar */}
-        <div style={{ height: 44, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 28px", position: "relative", zIndex: 50 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "#1F2937" }}>9:41</span>
-          <div style={{ width: 120, height: 28, background: "#1F2937", borderRadius: 20, position: "absolute", left: "50%", transform: "translateX(-50%)", top: 8 }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <svg width="15" height="11" viewBox="0 0 15 11" fill="#1F2937">
-              <rect x="0" y="5" width="2.5" height="6" rx="0.5" opacity="0.4"/>
-              <rect x="4" y="3" width="2.5" height="8" rx="0.5" opacity="0.6"/>
-              <rect x="8" y="1" width="2.5" height="10" rx="0.5" opacity="0.8"/>
-              <rect x="12" y="0" width="2.5" height="11" rx="0.5"/>
-            </svg>
-            <div style={{ width: 24, height: 11, border: "1.5px solid #1F2937", borderRadius: 3, padding: 1.5 }}>
-              <div style={{ width: "80%", height: "100%", background: "#1F2937", borderRadius: 1 }} />
-            </div>
-          </div>
-        </div>
-        {/* Screen */}
-        <div style={{ position: "absolute", top: 44, left: 0, right: 0, bottom: 0 }}>
-          {children}
-        </div>
-        {/* Home indicator */}
-        <div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 50 }}>
-          <div style={{ width: 134, height: 5, background: "#1F2937", borderRadius: 3, opacity: 0.15 }} />
-        </div>
+        {children}
       </div>
     </div>
   );
