@@ -699,7 +699,7 @@ function CheckinScreen({ student, studentIdx, onGenerate, onEditStudent, onBack 
               <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M1.5 4.5L7.5 1.5L13.5 4.5V10.5L7.5 13.5L1.5 10.5V4.5Z" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/><path d="M7.5 1.5V13.5" stroke="white" strokeWidth="1.4"/><path d="M1.5 4.5L7.5 7.5L13.5 4.5" stroke="white" strokeWidth="1.4" strokeLinejoin="round"/></svg>
             </span>
             <span style={{ fontSize: 15, fontWeight: 700, color: "#1F2937", letterSpacing: "0.2px" }}>课堂表现分类</span>
-            <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500, marginLeft: 2 }}>左右滑动选择</span>
+            <span style={{ fontSize: 12, color: "#9CA3AF", fontWeight: 500, marginLeft: 2 }}>点击选择分类</span>
           </div>
           <div style={{ height: 1, background: "#F3F4F6", margin: "0 4px 14px" }} />
           <div style={{ display: "flex", overflowX: "auto", gap: 12, scrollbarWidth: "none" }}>
